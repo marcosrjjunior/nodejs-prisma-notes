@@ -1,23 +1,29 @@
 import { Request, Response } from 'express'
-import prisma from '../lib/prisma'
+import { NotesRepository } from '../repositories/NotesRepository'
+import { NotesService } from '../services/NotesService'
 
-const index = async (req: Request, res: Response) => {
-  const response = await prisma.note.findMany()
+export class NotesController {
+  private notesService: NotesService
 
-  return res.send(response)
+  constructor() {
+    const notesRepository = new NotesRepository()
+    this.notesService = new NotesService(notesRepository)
+  }
+
+  index = async (req: Request, res: Response) => {
+    const response = await this.notesService.index()
+    return res.send(response)
+  }
+
+  create = async (req: Request, res: Response) => {
+    const { title, content } = req.body
+
+    const note = await this.notesService.create({ title, content })
+
+    if (!note) {
+      throw new Error('Student does not exists.')
+    }
+
+    return res.send(note)
+  }
 }
-
-const create = async (req: Request, res: Response) => {
-  const { title, content } = req.body
-
-  const response = await prisma.note.create({
-    data: {
-      title,
-      content,
-    },
-  })
-
-  return res.send(response)
-}
-
-export default { index, create }
